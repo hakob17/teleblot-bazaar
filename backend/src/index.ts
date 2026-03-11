@@ -23,7 +23,7 @@ export const prisma = new PrismaClient();
 
 import { login, getMe } from './controllers/authController';
 import { requireAuth } from './middlewares/authMiddleware';
-import { getLobbies, createLobby, joinLobby } from './controllers/lobbyController';
+import { getLobbies, getMatch, createLobby, joinLobby } from './controllers/lobbyController';
 import { submitBid, playCard } from './controllers/gameController';
 import { getMyHistory, getMatchReplay } from './controllers/statsController';
 import { depositStars, depositTon, getTransactions } from './controllers/walletController';
@@ -39,6 +39,7 @@ app.get('/api/auth/me', requireAuth, getMe);
 
 // Lobby Routes
 app.get('/api/lobbies', requireAuth, getLobbies);
+app.get('/api/matches/:matchId', requireAuth, getMatch);
 app.post('/api/lobbies', requireAuth, createLobby);
 app.post('/api/lobbies/join', requireAuth, joinLobby);
 

@@ -101,10 +101,11 @@ const WalletView: React.FC = () => {
       {/* Deposit Button */}
       <button
         onClick={() => setShowDeposit(true)}
-        className="w-full bg-game-accent hover:bg-sky-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-game-accent/20 transition-all mb-6"
+        className="w-full bg-game-accent hover:bg-sky-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-game-accent/20 transition-all mb-2"
       >
-        Deposit Funds
+        Add Test Balance
       </button>
+      <p className="text-xs text-slate-500 text-center mb-6">Demo mode — adds virtual balance for testing</p>
 
       {/* TON Connect */}
       <button
@@ -153,7 +154,8 @@ const WalletView: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-0">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeposit(false)}></div>
           <div className="glass-panel w-full max-w-sm rounded-t-2xl sm:rounded-2xl relative z-10 p-6">
-            <h3 className="text-xl font-bold mb-6">Deposit</h3>
+            <h3 className="text-xl font-bold mb-1">Add Test Balance</h3>
+            <p className="text-xs text-slate-500 mb-6">Demo mode — no real payment required</p>
 
             <div className="space-y-4 mb-8">
               <div>

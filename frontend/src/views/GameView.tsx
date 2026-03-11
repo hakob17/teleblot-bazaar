@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Users, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -6,6 +6,7 @@ import { useSocket } from '../context/SocketContext';
 import PlayingCard from '../components/PlayingCard';
 import SuitIcon from '../components/SuitIcon';
 import { getMatchFancyNames } from '../utils/fancyNames';
+import { apiFetch } from '../utils/api';
 
 const GameView: React.FC = () => {
   const { matchId } = useParams<{ matchId: string }>();
@@ -20,26 +21,35 @@ const GameView: React.FC = () => {
 
   const fancyNames = matchId ? getMatchFancyNames(matchId) : ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
 
+  const processMatchState = useCallback((match: any) => {
+    setLobbyState(match);
+    if (match.stateJson) {
+      const parsed = JSON.parse(match.stateJson);
+      setGameState(parsed);
+      if (user) {
+        const me = parsed.players.find((p: any) => p.userId === user.id);
+        if (me) {
+          setMySeatIndex(parsed.players.indexOf(me));
+        }
+      }
+    }
+  }, [user]);
+
+  // Fetch initial match state via REST API
+  useEffect(() => {
+    if (!matchId || !token) return;
+    apiFetch(`/api/matches/${matchId}`, token)
+      .then(processMatchState)
+      .catch(err => console.error('Failed to fetch match:', err));
+  }, [matchId, token, processMatchState]);
+
+  // Listen for real-time updates via socket
   useEffect(() => {
     if (!matchId) return;
     joinMatchRoom(matchId);
 
     if (socket) {
-      socket.on('matchStateUpdated', (match) => {
-        setLobbyState(match);
-        if (match.stateJson) {
-          const parsed = JSON.parse(match.stateJson);
-          setGameState(parsed);
-
-          if (user) {
-            const me = parsed.players.find((p: any) => p.userId === user.id);
-            if (me) {
-              const idx = parsed.players.indexOf(me);
-              setMySeatIndex(idx);
-            }
-          }
-        }
-      });
+      socket.on('matchStateUpdated', processMatchState);
 
       socket.on('gameStateUpdated', (state) => {
         setGameState(state);
@@ -57,7 +67,7 @@ const GameView: React.FC = () => {
         socket.off('matchSettled');
       }
     };
-  }, [socket, matchId, joinMatchRoom, user]);
+  }, [socket, matchId, joinMatchRoom, processMatchState]);
 
   const handlePlayCard = async (card: any) => {
     if (gameState?.phase !== 'PLAYING' || gameState?.currentTurnIndex !== mySeatIndex) return;
@@ -89,8 +99,11 @@ const GameView: React.FC = () => {
   // Loading state
   if (!lobbyState && !gameState) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-game-accent"></div>
+      <div className="flex flex-col min-h-screen items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-game-accent mb-6"></div>
+        <button onClick={() => navigate('/')} className="flex items-center text-slate-400 text-sm">
+          <ArrowLeft size={16} className="mr-1" /> Back to Lobby
+        </button>
       </div>
     );
   }

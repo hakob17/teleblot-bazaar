@@ -66,7 +66,7 @@ const AppRoutes = () => {
 };
 
 const App: React.FC = () => {
-  const manifestUrl = "https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json";
+  const manifestUrl = "https://teleblot-bazaar.pages.dev/tonconnect-manifest.json";
 
   return (
     <TonConnectUIProvider manifestUrl={manifestUrl}>

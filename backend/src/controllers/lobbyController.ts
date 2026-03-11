@@ -38,6 +38,36 @@ export const getLobbies = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+export const getMatch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const matchId = req.params.matchId as string;
+
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        players: {
+          include: {
+            user: { select: { id: true } }
+          }
+        }
+      }
+    });
+
+    if (!match) {
+      res.status(404).json({ error: 'Match not found' });
+      return;
+    }
+
+    res.json({
+      ...match,
+      fancyNames: getMatchFancyNames(match.id)
+    });
+  } catch (error) {
+    console.error('Error fetching match:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const createLobby = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.userId;
