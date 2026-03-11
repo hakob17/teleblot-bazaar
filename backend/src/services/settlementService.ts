@@ -29,7 +29,7 @@ export const settleMatch = async (matchId: string, gameState: GameState): Promis
   // In a real application, you would interact with TON blockchain or Telegram Stars API here.
   // For now, we update the virtual balances and create Transaction records.
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
      // Record commission
      await tx.transaction.create({
        data: {
