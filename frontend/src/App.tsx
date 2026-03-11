@@ -7,7 +7,7 @@ import LobbyView from './views/LobbyView';
 import GameView from './views/GameView';
 
 const AppRoutes = () => {
-  const { isLoading, token } = useAuth();
+  const { isLoading, token, error } = useAuth();
 
   if (isLoading) {
     return (
@@ -19,7 +19,19 @@ const AppRoutes = () => {
 
   // If no auth token (meaning mock failed or telegram auth failed), usually we'd show an error screen
   if (!token) {
-     return <div className="p-4 text-center mt-20 text-red-400">Authentication Failed. Please open via Telegram.</div>
+     return (
+       <div className="flex flex-col min-h-screen items-center justify-center p-4">
+          <div className="bg-game-card border border-red-500/50 p-6 rounded-xl text-center max-w-sm w-full shadow-lg shadow-red-500/10">
+              <h2 className="text-red-400 font-bold text-lg mb-2">Authentication Failed</h2>
+              <p className="text-slate-300 text-sm mb-4">Please open this app via Telegram.</p>
+              {error && (
+                 <div className="bg-red-500/10 text-red-300 text-xs p-3 rounded text-left font-mono break-all">
+                    Error: {error}
+                 </div>
+              )}
+          </div>
+       </div>
+     );
   }
 
   return (
