@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-game-bg text-slate-100 font-inter min-h-screen antialiased selection:bg-game-accent selection:text-white;
+  }
+}
+
+@layer components {
+  /* Playing Card Style */
+  .playing-card {
+    @apply relative bg-white rounded-lg shadow-lg overflow-hidden flex flex-col items-center justify-between p-2 cursor-pointer transition-transform duration-200 hover:-translate-y-2 hover:shadow-xl hover:shadow-game-accent/20;
+    aspect-ratio: 2.5/3.5;
+  }
+  
+  .playing-card.red {
+    @apply text-red-600;
+  }
+  
+  .playing-card.black {
+    @apply text-slate-900;
+  }
+  
+  /* Glassmorphism utility for modals */
+  .glass-panel {
+    @apply bg-game-card/80 backdrop-blur-md border border-slate-700/50 shadow-2xl;
+  }
+}
+
+/* Custom Scrollbar for Telegram Mini App consistency */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-700 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-600;
+}
