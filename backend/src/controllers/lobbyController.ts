@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma, io } from '../index';
+import { getMatchFancyNames } from '../game/fancyNames';
 
 export const getLobbies = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -11,7 +12,7 @@ export const getLobbies = async (req: Request, res: Response): Promise<void> => 
         players: {
           include: {
             user: {
-              select: { id: true, username: true, telegramId: true }
+              select: { id: true }
             }
           }
         }
@@ -20,7 +21,17 @@ export const getLobbies = async (req: Request, res: Response): Promise<void> => 
       take: 20
     });
 
-    res.json(lobbies);
+    // Add fancy names and strip real identities
+    const lobbiesWithNames = lobbies.map(lobby => ({
+      ...lobby,
+      fancyNames: getMatchFancyNames(lobby.id),
+      players: lobby.players.map(p => ({
+        ...p,
+        user: { id: p.user.id }
+      }))
+    }));
+
+    res.json(lobbiesWithNames);
   } catch (error) {
     console.error('Error fetching lobbies:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -51,7 +62,7 @@ export const createLobby = async (req: Request, res: Response): Promise<void> =>
       },
       include: {
         players: {
-          include: { user: { select: { id: true, username: true } } }
+          include: { user: { select: { id: true } } }
         }
       }
     });
@@ -129,7 +140,7 @@ export const joinLobby = async (req: Request, res: Response): Promise<void> => {
         where: { id: matchId },
         include: {
           players: {
-            include: { user: { select: { id: true, username: true, telegramId: true } } }
+            include: { user: { select: { id: true } } }
           }
         }
       });

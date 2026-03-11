@@ -14,7 +14,7 @@ app.use(express.json());
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // We'll restrict this in production
+    origin: '*',
     methods: ['GET', 'POST']
   }
 });
@@ -25,6 +25,9 @@ import { login, getMe } from './controllers/authController';
 import { requireAuth } from './middlewares/authMiddleware';
 import { getLobbies, createLobby, joinLobby } from './controllers/lobbyController';
 import { submitBid, playCard } from './controllers/gameController';
+import { getMyHistory, getMatchReplay } from './controllers/statsController';
+import { depositStars, depositTon, getTransactions } from './controllers/walletController';
+import { getLeaderboard } from './controllers/leaderboardController';
 
 app.get('/', (req, res) => {
   res.send('Bazaar Blot Backend API is running');
@@ -43,15 +46,25 @@ app.post('/api/lobbies/join', requireAuth, joinLobby);
 app.post('/api/game/bid', requireAuth, submitBid);
 app.post('/api/game/play', requireAuth, playCard);
 
+// Stats & Replay Routes
+app.get('/api/matches/history', requireAuth, getMyHistory);
+app.get('/api/matches/:matchId/replay', requireAuth, getMatchReplay);
+
+// Wallet Routes
+app.post('/api/wallet/deposit/stars', requireAuth, depositStars);
+app.post('/api/wallet/deposit/ton', requireAuth, depositTon);
+app.get('/api/wallet/transactions', requireAuth, getTransactions);
+
+// Leaderboard Routes
+app.get('/api/leaderboard', requireAuth, getLeaderboard);
+
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  // When a user selects to view the lobby list
   socket.on('joinLobbyRoom', () => {
     socket.join('lobbies');
   });
 
-  // When a user enters a specific match waiting room
   socket.on('joinMatchRoom', (matchId: string) => {
     socket.join(`match_${matchId}`);
   });
@@ -61,7 +74,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Export io so controllers can emit events
 export { io };
 
 const PORT = process.env.PORT || 3001;
