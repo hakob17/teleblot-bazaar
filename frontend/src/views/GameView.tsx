@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Users, AlertCircle, ArrowLeft, Share2, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import PlayingCard from '../components/PlayingCard';
 import SuitIcon from '../components/SuitIcon';
 import { getMatchFancyNames } from '../utils/fancyNames';
 import { apiFetch } from '../utils/api';
+import WebApp from '@twa-dev/sdk';
 
 const GameView: React.FC = () => {
   const { matchId } = useParams<{ matchId: string }>();
@@ -18,8 +19,33 @@ const GameView: React.FC = () => {
   const [lobbyState, setLobbyState] = useState<any>(null);
   const [mySeatIndex, setMySeatIndex] = useState<number | null>(null);
   const [settleResult, setSettleResult] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
   const fancyNames = matchId ? getMatchFancyNames(matchId) : ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+
+  const botUsername = import.meta.env.VITE_BOT_USERNAME || 'BazaarBlotBot';
+  const inviteLink = `https://t.me/${botUsername}/bazaarblot?startapp=${matchId}`;
+
+  const handleShare = () => {
+    const text = `Join my Bazaar Blot game! ${lobbyState?.betAmount} ${lobbyState?.betCurrency} per player`;
+    try {
+      WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(text)}`);
+    } catch {
+      // Fallback: copy to clipboard
+      handleCopyLink();
+    }
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Last resort fallback
+      prompt('Copy this link to share:', inviteLink);
+    }
+  };
 
   const processMatchState = useCallback((match: any) => {
     setLobbyState(match);
@@ -116,16 +142,33 @@ const GameView: React.FC = () => {
           <ArrowLeft size={20} className="mr-2" /> Back to Lobbies
         </button>
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">Waiting for Players</h2>
-          <p className="text-slate-400">Match ID: {matchId?.slice(0, 8)}...</p>
-          <div className="inline-flex items-center space-x-2 bg-game-card px-4 py-2 rounded-full mt-4 border border-slate-700">
+          <div className="inline-flex items-center space-x-2 bg-game-card px-4 py-2 rounded-full mt-2 border border-slate-700">
             <span className="font-bold">{lobbyState?.betAmount}</span>
             <span className="text-sm font-medium text-slate-400">{lobbyState?.betCurrency}</span>
           </div>
         </div>
 
-        <div className="space-y-4">
+        {/* Invite Friends */}
+        <div className="mb-6 space-y-2">
+          <button
+            onClick={handleShare}
+            className="w-full bg-game-accent hover:bg-sky-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-game-accent/20 transition-all flex items-center justify-center space-x-2"
+          >
+            <Share2 size={18} />
+            <span>Invite Friends</span>
+          </button>
+          <button
+            onClick={handleCopyLink}
+            className="w-full bg-game-card hover:bg-slate-700 text-slate-300 font-medium py-3 rounded-xl border border-slate-700 transition-all flex items-center justify-center space-x-2"
+          >
+            {copied ? <Check size={16} className="text-game-success" /> : <Copy size={16} />}
+            <span>{copied ? 'Link Copied!' : 'Copy Invite Link'}</span>
+          </button>
+        </div>
+
+        <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => {
             const player = lobbyState?.players[i];
             const isMe = player && player.userId === user?.id;
@@ -144,6 +187,10 @@ const GameView: React.FC = () => {
             );
           })}
         </div>
+
+        <p className="text-center text-xs text-slate-600 mt-6">
+          {lobbyState?.players?.length || 0} / 4 players joined — game starts when full
+        </p>
       </div>
     );
   }

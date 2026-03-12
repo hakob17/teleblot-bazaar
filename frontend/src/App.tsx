@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { TonConnectUIProvider } from '@tonconnect/ui-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
@@ -11,15 +11,39 @@ import StatsView from './views/StatsView';
 import LeaderboardView from './views/LeaderboardView';
 import ReplayListView from './views/ReplayListView';
 import ReplayView from './views/ReplayView';
+import WebApp from '@twa-dev/sdk';
 
 const HIDE_NAV_PATHS = ['/game/', '/replay/'];
+
+// Handles deep link from Telegram start_param (?startapp=matchId)
+const DeepLinkHandler: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Only process on initial load at root
+    if (location.pathname !== '/') return;
+
+    try {
+      const startParam = WebApp.initDataUnsafe?.start_param;
+      if (startParam) {
+        // startParam is the matchId — navigate to the game room
+        navigate(`/game/${startParam}`, { replace: true });
+      }
+    } catch {
+      // Not in Telegram context or no start_param
+    }
+  }, []);
+
+  return <>{children}</>;
+};
 
 const AppLayout = () => {
   const location = useLocation();
   const hideNav = HIDE_NAV_PATHS.some(p => location.pathname.startsWith(p));
 
   return (
-    <>
+    <DeepLinkHandler>
       <Routes>
         <Route path="/" element={<LobbyView />} />
         <Route path="/wallet" element={<WalletView />} />
@@ -31,7 +55,7 @@ const AppLayout = () => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {!hideNav && <BottomNav />}
-    </>
+    </DeepLinkHandler>
   );
 };
 
